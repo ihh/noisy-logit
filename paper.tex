@@ -90,10 +90,13 @@ derived by \cite{BootkrajangKaban2012} may well be superior to the EM method.
 However I've outlined the EM approach here for reference.
 
 The likelihood to be maximized is
-\[
-P(\missing,\allcatlabels,\emparams|\allrealdata)
-= P(\weights) P(\labelerrprobs) P(\missing|\weights,\allrealdata) P(\allcatlabels|\labelerrprobs,\missing)
-\]
+$P(\allcatlabels,\emparams|\allrealdata) = \sum_{\missing} P(\missing,\allcatlabels,\emparams|\allrealdata)$
+where
+\begin{eqnarray*}
+  P(\missing,\allcatlabels,\emparams|\allrealdata)
+  & = & P(\emparams) P(\missing,\allcatlabels|\emparams,\allrealdata) \\
+  & = & P(\weights) P(\labelerrprobs) P(\missing|\weights,\allrealdata) P(\allcatlabels|\labelerrprobs,\missing)
+\end{eqnarray*}
 
 At the $\emiteration$'th iteration, the parameters found by the EM algorithm are given by maximizing the expected log-likelihood
 \begin{eqnarray*}
