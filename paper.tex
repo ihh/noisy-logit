@@ -17,28 +17,32 @@
 %\frontmatter
 
 \title{Logistic regression with a latent binary variable and noisy labels}
-\author{Katrina Kalatar, Ian Holmes}
 %\email{$\{$kkalantar,ihh$\}$@berkeley.edu}}
 
 \maketitle
+
+\section{Model}
 
 Following \cite{BootkrajangKaban2012},
 consider a set of $\datapoints$ training data points
 $\dataset = \left\{ (\realdata_1,\catlabel_1) \ldots (\realdata_\datapoints,\catlabel_\datapoints) \right\}$
 where
 $\realdata_\datapoint \in \reals^\dimensions$
-denote $\dimensions$-dimensional real-valued data (e.g. gene expression levels)
+denote $\dimensions$-dimensional real-valued explanatory data (e.g. gene expression levels)
 and
 $\catlabel_\datapoint \in \left\{ 0, 1 \ldots \catlabels - 1 \right\}$
 denotes a categorical label with $\catlabels$ possible values
 (e.g. clinician-assigned label incorporating some degree of uncertainty).
 
-We aim to fit this with a two-stage model using a latent binary variable
+We aim to fit this with a two-stage model,
+first regressing the explanatory data $\realdata_\datapoint$ to a latent binary variable representing ground truth
 $\binlabel_\datapoint \in \left\{ 0, 1 \right\}$
-(e.g. true disease state) for each datapoint
+(e.g. disease state),
+then modeling clinical labeling as a categorical variable $\catlabel_\datapoint | \binlabel_\datapoint$
+that is conditionally-independent of the explanatory data given the ground truth
 \begin{eqnarray*}
 P(\binlabel = 1 | \realdata, \weights) & = & \logistic{\weights^T \realdata} \\
-P(\catlabel = \catlabelindex | \binlabel = \binlabelindex, \labelerrprobs) & = & \labelerrprob_{\binlabelindex\catlabelindex}
+P(\catlabel = \catlabelindex | \binlabel = \binlabelindex, \labelerrprobs) & = & \labelerrprob_{\binlabelindex,\catlabelindex}
 \end{eqnarray*}
 where
 $\logistic{x} = \frac{1}{1+e^{-x}}$ is the logistic function,
@@ -48,7 +52,7 @@ $\labelerrprobs$ are probability parameters for the label observation model.
 We put a Laplace double-exponential (Lasso) prior on $\weights$, and a uniform Dirichlet prior on each row of $\labelerrprobs$
 \begin{eqnarray*}
 P(\weights) & \propto & \prod_{\dimension=1}^{\dimensions} \exp(-|\realdataval^{(\dimension)}|) \\
-P(\labelerrprobs) & \propto & \prod_{\binlabelindex \in \{0,1\}} \delta \left( 1 - \sum_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex\catlabelindex} \right)
+P(\labelerrprobs) & \propto & \prod_{\binlabelindex \in \{0,1\}} \delta \left( 1 - \sum_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex} \right)
 \end{eqnarray*}
 
 This is equivalent to Section 2.2 of \cite{BootkrajangKaban2012},
@@ -56,6 +60,91 @@ with the sum over $j$ in equation (8) of that paper constrained to $j\in\{0,1\}$
 instead of $j\in\{0,1\ldots K-1\}$.
 The paper derives a conjugate gradient optimization algorithm,
 and proves its convergence.
+
+\subsection{Quartile approach}
+
+An alternate model is to use the interpretation of logistic regression where a latent {\em continuous-valued} random variable
+(obtained by adding logistically-distributed noise to $\transpose{\weights} \realdata$)
+is used to obtain the labels ($\binlabel,\catlabel$),
+e.g. with $\catlabel$ corresponding to the quartiles.
+
+I haven't pursued this model, as the assumption that $\catlabel$ corresponds to quartiles of the latent variable underlying
+logistic regression seems like a possible misfit to the situation of arbitrarily designated clinical labels
+(although, conceivably, my assumption that $\catlabel$ is independent of $\realdata$ given $\binlabel$ is just as bad, or worse).
+
+
+\section{EM algorithm}
+
+How to use the training data $\dataset$ to fit the weights $\weights$ and probabilities $\labelerrprobs$?
+One approach is to use the EM (Expectation Maximization) algorithm \cite{DempsterLairdRubin77},
+treating the binary-valued latent variables $\missing = \datasubset{\binlabel}$ as {\em missing data},
+the dataset $\dataset = (\allrealdata,\allcatlabels)$ as {\em observed data}
+(with inputs $\allrealdata = \datasubset{\realdata}$ and observed labels $\allcatlabels = \datasubset{\catlabel}$),
+and the weights and probabilities $\emparams = (\weights,\labelerrprobs)$ as the {\em parameters} to be fit by the algorithm.
+
+The conjugate gradient parameter optimization approach
+derived by \cite{BootkrajangKaban2012} may well be superior to the EM method.
+However I've outlined the EM approach here for reference.
+
+The likelihood to be maximized is
+\[
+P(\missing,\allcatlabels,\emparams|\allrealdata)
+= P(\weights) P(\labelerrprobs) P(\missing|\weights,\allrealdata) P(\allcatlabels|\labelerrprobs,\missing)
+\]
+
+At the $\emiteration$'th iteration, the parameters found by the EM algorithm are given by maximizing the expected log-likelihood
+\begin{eqnarray*}
+  \emparams^{(\emiteration)}
+  & = &
+  \argmax_{\emparams}\ 
+  \emobjective\left(\emparams||\emparams^{(\emiteration-1)}\right)
+  \\
+  \emobjective\left(\emparams||\emparams^{(\emiteration-1)}\right)
+  & = & 
+  \sum_{\missing} P(\missing | \emparams^{(\emiteration-1)}, \allrealdata, \allcatlabels) \log P(\missing,\allcatlabels,\emparams|\allrealdata)
+  \\
+  & = & 
+  \log P(\weights) + \log P(\labelerrprobs)
+  + \sum_{\missing} P(\missing | \weights^{(\emiteration-1)}, \allrealdata, \allcatlabels) \left[ \log P(\missing| \weights, \allrealdata) + \log P(\allcatlabels|\labelerrprobs,\missing) \right]
+  \\
+  & = & 
+  \log P(\weights) + \log P(\labelerrprobs)
+  \\ & &
+  + \sum_{\datapoint} \sum_{\binlabelindex \in \{0,1\}} P(\binlabel_{\datapoint} = \binlabelindex | \emparams^{(\emiteration-1)}, \realdata_{\datapoint}, \catlabel_{\datapoint}) \left[ \log P(\binlabel_{\datapoint} = \binlabelindex | \weights, \realdata_{\datapoint}) + \log P(\catlabel_{\datapoint}|\labelerrprobs,\binlabel_{\datapoint}=\binlabelindex) \right]
+  \\ & = &
+  \emobjective_{\weights}\ +\ \emobjective_{\labelerrprobs}
+  \\
+  \emobjective_{\weights}
+  & = &
+  \log P(\weights)
+  + \sum_{\datapoint} \left[ (1-\prevpostprob) \log (1 - \logistic{\transpose{\weights} \realdata_{\datapoint}})
+  + \prevpostprob \log \logistic{\transpose{\weights} \realdata_{\datapoint}} \right]
+  \\
+  \emobjective_{\labelerrprobs}
+  & = &
+  \log P(\labelerrprobs)
+  + \sum_{\datapoint} \left[ (1-\prevpostprob) \log \labelerrprob_{0,\catlabel_{\datapoint}} + \prevpostprob \log \labelerrprob_{1,\catlabel_{\datapoint}} \right]
+  \\
+  \postprob{\emiteration}
+  & = &
+  P(\binlabel_{\datapoint} = 1 | \emparams^{(\emiteration)}, \realdata_{\datapoint}, \catlabel_{\datapoint})
+  \\
+  P(\binlabel_{\datapoint} = 1 | \emparams, \realdata_{\datapoint}, \catlabel_{\datapoint})
+  & = &
+  \frac{1}{1 + \frac{P(\catlabel_{\datapoint}, \binlabel_{\datapoint} = 0 | \emparams, \realdata_{\datapoint})}
+    {P(\catlabel_{\datapoint}, \binlabel_{\datapoint} = 1 | \emparams, \realdata_{\datapoint})}}
+  \\
+  & = &
+  \frac{1}{1 + \frac{(1 - \logistic{\transpose{\weights} \realdata_{\datapoint}}) \labelerrprob_{0,\catlabel_{\datapoint}}}
+    {\logistic{\transpose{\weights} \realdata_{\datapoint}} \labelerrprob_{1,\catlabel_{\datapoint}}}}
+\end{eqnarray*}
+
+The maximization of $\emobjective_{\weights}$ w.r.t. $\weights$ is a weighted, Lasso-penalized logistic regression
+(the weights being the $\postprob{\emiteration}$),
+for which closed formulae may exist (if not, it may be better to use the conjugate gradient derivations
+of \cite{BootkrajangKaban2012} rather than derive gradients for this more indirect EM approach).
+
+The maximization of $\emobjective_{\labelerrprobs}$ w.r.t. $\labelerrprobs$ should be solvable exactly.
 
 
 \bibliographystyle{plain}
