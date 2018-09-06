@@ -14,6 +14,7 @@
 \newcommand\catlabel{c}
 \newcommand\binlabel{b}
 \newcommand\weights{{\bf w}}
+\newcommand\weight{w}
 \newcommand\labelerrprobs{{\bf z}}
 \newcommand\labelerrprob{z}
 
@@ -23,7 +24,8 @@
 \newcommand\emparams{\theta}
 \newcommand\emiteration{i}
 \newcommand\missing{B}
-\newcommand\postprob[1]{\beta^{(#1)}_{\datapoint}}
+\newcommand\postprobvar{\beta}
+\newcommand\postprob[1]{\postprobvar^{(#1)}_{\datapoint}}
 \newcommand\prevpostprob{\postprob{\emiteration-1}}
 
 \newcommand\reals{\mathbb{R}}

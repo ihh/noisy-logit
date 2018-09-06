@@ -54,7 +54,7 @@ We put a Laplace double-exponential (Lasso) prior on $\weights$, and a uniform\f
   e.g. by adding a pseudocount of 1 for all $\binlabel \to \catlabel$ mappings that ``agree''.
 } Dirichlet prior on each row of $\labelerrprobs$
 \begin{eqnarray*}
-P(\weights) & \propto & \prod_{\dimension=1}^{\dimensions} \exp(-|\realdataval^{(\dimension)}|) \\
+P(\weights) & \propto & \prod_{\dimension=1}^{\dimensions} \exp(-|\weight^{(\dimension)}|) \\
 P(\labelerrprobs) & \propto & \prod_{\binlabelindex \in \{0,1\}} \delta \left( 1 - \sum_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex} \right)
 \end{eqnarray*}
 
