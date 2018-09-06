@@ -49,7 +49,10 @@ $\logistic{x} = \frac{1}{1+e^{-x}}$ is the logistic function,
 $\weights \in \reals^\dimensions$ are weight parameters for the logistic regression model, and
 $\labelerrprobs$ are probability parameters for the label observation model.
 
-We put a Laplace double-exponential (Lasso) prior on $\weights$, and a uniform Dirichlet prior on each row of $\labelerrprobs$
+We put a Laplace double-exponential (Lasso) prior on $\weights$, and a uniform\footnote{
+  For identifiability of $\binlabel$, we need to break the symmetry of the Dirichlet prior slightly;
+  e.g. by adding a pseudocount of 1 for all $\binlabel \to \catlabel$ mappings that ``agree''.
+} Dirichlet prior on each row of $\labelerrprobs$
 \begin{eqnarray*}
 P(\weights) & \propto & \prod_{\dimension=1}^{\dimensions} \exp(-|\realdataval^{(\dimension)}|) \\
 P(\labelerrprobs) & \propto & \prod_{\binlabelindex \in \{0,1\}} \delta \left( 1 - \sum_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex} \right)
@@ -105,7 +108,7 @@ At the $\emiteration$'th iteration, the parameters found by the EM algorithm are
   \\
   & = & 
   \log P(\weights) + \log P(\labelerrprobs)
-  + \sum_{\missing} P(\missing | \weights^{(\emiteration-1)}, \allrealdata, \allcatlabels) \left[ \log P(\missing| \weights, \allrealdata) + \log P(\allcatlabels|\labelerrprobs,\missing) \right]
+  + \sum_{\missing} P(\missing | \emparams^{(\emiteration-1)}, \allrealdata, \allcatlabels) \left[ \log P(\missing| \weights, \allrealdata) + \log P(\allcatlabels|\labelerrprobs,\missing) \right]
   \\
   & = & 
   \log P(\weights) + \log P(\labelerrprobs)
