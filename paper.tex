@@ -1,0 +1,65 @@
+\documentclass{article}
+
+\usepackage[hyphens]{url}
+\usepackage{fancyvrb}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{marvosym}
+
+\input{defs.tex}
+
+% Document
+\begin{document}
+
+%\frontmatter
+
+\title{Logistic regression with a latent binary variable and noisy labels}
+\author{Katrina Kalatar, Ian Holmes}
+%\email{$\{$kkalantar,ihh$\}$@berkeley.edu}}
+
+\maketitle
+
+Following \cite{BootkrajangKaban2012},
+consider a set of $\datapoints$ training data points
+$\dataset = \left\{ (\realdata_1,\catlabel_1) \ldots (\realdata_\datapoints,\catlabel_\datapoints) \right\}$
+where
+$\realdata_\datapoint \in \reals^\dimensions$
+denote $\dimensions$-dimensional real-valued data (e.g. gene expression levels)
+and
+$\catlabel_\datapoint \in \left\{ 0, 1 \ldots \catlabels - 1 \right\}$
+denotes a categorical label with $\catlabels$ possible values
+(e.g. clinician-assigned label incorporating some degree of uncertainty).
+
+We aim to fit this with a two-stage model using a latent binary variable
+$\binlabel_\datapoint \in \left\{ 0, 1 \right\}$
+(e.g. true disease state) for each datapoint
+\begin{eqnarray*}
+P(\binlabel = 1 | \realdata, \weights) & = & \logistic{\weights^T \realdata} \\
+P(\catlabel = \catlabelindex | \binlabel = \binlabelindex, \labelerrprobs) & = & \labelerrprob_{\binlabelindex\catlabelindex}
+\end{eqnarray*}
+where
+$\logistic{x} = \frac{1}{1+e^{-x}}$ is the logistic function,
+$\weights \in \reals^\dimensions$ are weight parameters for the logistic regression model, and
+$\labelerrprobs$ are probability parameters for the label observation model.
+
+We put a Laplace double-exponential (Lasso) prior on $\weights$, and a uniform Dirichlet prior on each row of $\labelerrprobs$
+\begin{eqnarray*}
+P(\weights) & \propto & \prod_{\dimension=1}^{\dimensions} \exp(-|\realdataval^{(\dimension)}|) \\
+P(\labelerrprobs) & \propto & \prod_{\binlabelindex \in \{0,1\}} \delta \left( 1 - \sum_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex\catlabelindex} \right)
+\end{eqnarray*}
+
+This is equivalent to Section 2.2 of \cite{BootkrajangKaban2012},
+with the sum over $j$ in equation (8) of that paper constrained to $j\in\{0,1\}$
+instead of $j\in\{0,1\ldots K-1\}$.
+The paper derives a conjugate gradient optimization algorithm,
+and proves its convergence.
+
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+
+\end{document}
