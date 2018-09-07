@@ -13,8 +13,8 @@
 \newcommand\allcatlabels{C}
 \newcommand\catlabel{c}
 \newcommand\binlabel{b}
-\newcommand\weights{{\bf w}}
-\newcommand\weight{w}
+\newcommand\weights{{\bf u}}
+\newcommand\weight{u}
 \newcommand\labelerrprobs{{\bf z}}
 \newcommand\labelerrprob{z}
 
@@ -24,9 +24,12 @@
 \newcommand\emparams{\theta}
 \newcommand\emiteration{i}
 \newcommand\missing{B}
+
 \newcommand\postprobvar{\beta}
-\newcommand\postprobiter{\postprobvar^{(\emiteration)}}
-\newcommand\postprob{\postprobiter_{\datapoint}}
+\newcommand\postprobiter[1]{\postprobvar^{(\emiteration #1)}}
+\newcommand\postprob{\postprobiter{}_{\datapoint}}
+
+\newcommand\freq{f}
 
 \newcommand\reals{\mathbb{R}}
 \newcommand\argmax{\mbox{argmax}}

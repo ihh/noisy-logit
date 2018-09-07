@@ -25,7 +25,7 @@
 
 Following \cite{BootkrajangKaban2012},
 consider a set of $\datapoints$ training data points
-$\dataset = \left\{ (\realdata_1,\catlabel_1) \ldots (\realdata_\datapoints,\catlabel_\datapoints) \right\}$
+$\dataset = \left\{ (\realdata_{\datapoint},\catlabel_{\datapoint}): 1 \leq \datapoint \leq \datapoints \right\}$
 where
 $\realdata_\datapoint \in \reals^\dimensions$
 denote $\dimensions$-dimensional real-valued explanatory data (e.g. gene expression levels)
@@ -46,7 +46,7 @@ P(\catlabel = \catlabelindex | \binlabel = \binlabelindex, \labelerrprobs) & = &
 \end{eqnarray*}
 where
 $\logistic{x} = \frac{1}{1+e^{-x}}$ is the logistic function,
-$\weights \in \reals^\dimensions$ are weight parameters for the logistic regression model, and
+$\weights \in \reals^\dimensions$ are parameters for the logistic regression model, and
 $\labelerrprobs$ are probability parameters for the label observation model.
 
 We put a Laplace double-exponential (Lasso) prior on $\weights$, and a uniform\footnote{
@@ -89,13 +89,18 @@ The conjugate gradient parameter optimization approach
 derived by \cite{BootkrajangKaban2012} may well be superior to the EM method.
 However I've outlined the EM approach here for reference.
 
-The likelihood to be maximized is
-$P(\allcatlabels,\emparams|\allrealdata) = \sum_{\missing} P(\missing,\allcatlabels,\emparams|\allrealdata)$
-where
+The joint likelihood including observed and missing data is
 \begin{eqnarray*}
   P(\missing,\allcatlabels,\emparams|\allrealdata)
   & = & P(\emparams) P(\missing,\allcatlabels|\emparams,\allrealdata) \\
-  & = & P(\weights) P(\labelerrprobs) P(\missing|\weights,\allrealdata) P(\allcatlabels|\labelerrprobs,\missing)
+  & = & P(\weights) P(\labelerrprobs) P(\missing|\weights,\allrealdata) P(\allcatlabels|\labelerrprobs,\missing) \\
+  & = & P(\weights) P(\labelerrprobs) \prod_{\datapoint=1}^{\datapoints} P(\binlabel_{\datapoint}|\weights,\realdata_{\datapoint}) P(\catlabel_{\datapoint}|\labelerrprobs,\binlabel_{\datapoint})
+\end{eqnarray*}
+
+The marginal likelihood to be maximized, using observed data only, is
+\begin{eqnarray*}
+  P(\allcatlabels,\emparams|\allrealdata) & = & \sum_{\missing} P(\missing,\allcatlabels,\emparams|\allrealdata) \\
+  & = & P(\weights) P(\labelerrprobs) \prod_{\datapoint=1}^{\datapoints} \sum_{\binlabelindex \in \{0,1\}} P(\binlabel_{\datapoint}=\binlabelindex|\weights,\realdata_{\datapoint}) P(\catlabel_{\datapoint}|\labelerrprobs,\binlabel_{\datapoint}=\binlabelindex)
 \end{eqnarray*}
 
 At the ($\emiteration$+1)'th iteration, the parameters found by the EM algorithm are given by maximizing the expected log-likelihood
@@ -148,17 +153,48 @@ At the ($\emiteration$+1)'th iteration, the parameters found by the EM algorithm
 The maximization of $\emobjective_{\weights}$ w.r.t. $\weights$ is a weighted, Lasso-penalized logistic regression
 (the weights being the $\postprob$).
 
-The maximization of $\emobjective_{\labelerrprobs}$ w.r.t. $\labelerrprobs$ should be solvable exactly.
+The maximization of $\emobjective_{\labelerrprobs}$ w.r.t. $\labelerrprobs$ should be a matter of counting.
 
 \subsection{Implementation of weighted logistic regression in R}
 
 The maximization of $\emobjective_{\weights}$ w.r.t. $\weights$ can be performed using R's \rcode{glm()} function (generalized linear model regression)
 with \rcode{family = binomial(link = "logit")}
-(logistic regression is equivalent to binomial-family GLM regression with the ``logit'' link function)
-and using the \rcode{weights} argument to specify the weights $(\postprobiter_1 \ldots \postprobiter_{\datapoints})$
-(weights correspond implicitly to frequency of observations of each case, which intuitively is how posterior probabilities of missing data are interpreted in EM).
+(logistic regression is equivalent to binomial-family GLM regression with the ``logit'' link function).
 
-This can then be worked into an R program that implements EM.
+R's GLM-fitter allows {\em weighting} of the training examples;
+that is, a weight-augmented dataset $\dataset' = \{ (\realdata'_{\datapoint},\binlabel'_{\datapoint},\freq'_{\datapoint}): 1 \leq \datapoint \leq \datapoints' \}$
+where $\freq'_{\datapoint}$ is a {\em weight} (by default 1),
+loosely equivalent (when integer-valued) to the number of times datapoint $(\realdata_{\datapoint},\binlabel_{\datapoint})$ was observed, or its frequency.
+
+To implement the M-step in the $(\emiteration+1)$'th iteration of EM,
+we construct a weighted pseudo-dataset $\dataset'$ containing $\datapoints' = 2\datapoints$ weighted training examples
+(that is, twice as many as the original unweighted dataset $\dataset$).
+The first $\datapoints$ are labeled as negatives, the remainder as positives;
+the weights are set using $\postprob$, the posterior probability inferences from the previous step of EM.
+Specifically, for $1 \leq \datapoint \leq \datapoints$
+\begin{eqnarray*}
+  \realdata'_{\datapoint} & = & \realdata_{\datapoint} \\
+  \binlabel'_{\datapoint} & = & 0 \\
+  \freq'_{\datapoint} & = & 1 - \postprob \\
+  \realdata'_{\datapoints+\datapoint} & = & \realdata_{\datapoint} \\
+  \binlabel'_{\datapoints+\datapoint} & = & 1 \\
+  \freq'_{\datapoints+\datapoint} & = & \postprob
+\end{eqnarray*}
+
+The weights can be supplied to the R code using using the \rcode{weights} argument to \rcode{glm()}.
+
+The weighted logistic regression fit can then be worked into an R program that implements EM.
+Pseudocode for this algorithm is as follows
+\begin{itemize}
+\item Set $\emparams^{(1)}$ to some ``sensible'' initial values
+\item For $\emiteration \in \{ 1, 2, 3 \ldots \}$ do:
+\begin{itemize}
+\item Calculate $\postprob$ using current $\emparams^{(\emiteration)} = (\weights^{(\emiteration)},\labelerrprobs^{(\emiteration)})$
+\item Set $\labelerrprobs^{(\emiteration+1)} \leftarrow \argmax_{\labelerrprobs} ( \emobjective_{\labelerrprobs} )$ by counting \& normalizing
+\item Set $\weights^{(\emiteration+1)} \leftarrow \argmax_{\weights} ( \emobjective_{\weights} )$ using \rcode{glm()} with weights
+\end{itemize}
+\item While $\log \frac{P(\allcatlabels,\emparams^{(\emiteration+1)}|\allrealdata)}{P(\allcatlabels,\emparams^{(\emiteration)}|\allrealdata)}$ is increasing
+\end{itemize}
 
 \bibliographystyle{plain}
 \bibliography{references}
