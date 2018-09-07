@@ -78,12 +78,12 @@ logistic regression seems like a possible misfit to the situation of arbitrarily
 
 \section{EM algorithm}
 
-How to use the training data $\dataset$ to fit the weights $\weights$ and probabilities $\labelerrprobs$?
+How to use the training data $\dataset$ to fit the logistic model weights $\weights$ and label error probabilities $\labelerrprobs$?
 One approach is to use the EM (Expectation Maximization) algorithm \cite{DempsterLairdRubin77},
 treating the binary-valued latent variables $\missing = \datasubset{\binlabel}$ as {\em missing data},
 the dataset $\dataset = (\allrealdata,\allcatlabels)$ as {\em observed data}
 (with inputs $\allrealdata = \datasubset{\realdata}$ and observed labels $\allcatlabels = \datasubset{\catlabel}$),
-and the weights and probabilities $\emparams = (\weights,\labelerrprobs)$ as the {\em parameters} to be fit by the algorithm.
+and $\emparams = (\weights,\labelerrprobs)$ as the {\em parameters} to be fit by the algorithm.
 
 The conjugate gradient parameter optimization approach
 derived by \cite{BootkrajangKaban2012} may well be superior to the EM method.
