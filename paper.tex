@@ -98,40 +98,40 @@ where
   & = & P(\weights) P(\labelerrprobs) P(\missing|\weights,\allrealdata) P(\allcatlabels|\labelerrprobs,\missing)
 \end{eqnarray*}
 
-At the $\emiteration$'th iteration, the parameters found by the EM algorithm are given by maximizing the expected log-likelihood
+At the ($\emiteration$+1)'th iteration, the parameters found by the EM algorithm are given by maximizing the expected log-likelihood
 \begin{eqnarray*}
-  \emparams^{(\emiteration)}
+  \emparams^{(\emiteration+1)}
   & = &
   \argmax_{\emparams}\ 
-  \emobjective\left(\emparams||\emparams^{(\emiteration-1)}\right)
+  \emobjective\left(\emparams||\emparams^{(\emiteration)}\right)
   \\
-  \emobjective\left(\emparams||\emparams^{(\emiteration-1)}\right)
+  \emobjective\left(\emparams||\emparams^{(\emiteration)}\right)
   & = & 
-  \sum_{\missing} P(\missing | \emparams^{(\emiteration-1)}, \allrealdata, \allcatlabels) \log P(\missing,\allcatlabels,\emparams|\allrealdata)
+  \sum_{\missing} P(\missing | \emparams^{(\emiteration)}, \allrealdata, \allcatlabels) \log P(\missing,\allcatlabels,\emparams|\allrealdata)
   \\
   & = & 
   \log P(\weights) + \log P(\labelerrprobs)
-  + \sum_{\missing} P(\missing | \emparams^{(\emiteration-1)}, \allrealdata, \allcatlabels) \left[ \log P(\missing| \weights, \allrealdata) + \log P(\allcatlabels|\labelerrprobs,\missing) \right]
+  + \sum_{\missing} P(\missing | \emparams^{(\emiteration)}, \allrealdata, \allcatlabels) \left[ \log P(\missing| \weights, \allrealdata) + \log P(\allcatlabels|\labelerrprobs,\missing) \right]
   \\
   & = & 
   \log P(\weights) + \log P(\labelerrprobs)
   \\ & &
-  + \sum_{\datapoint} \sum_{\binlabelindex \in \{0,1\}} P(\binlabel_{\datapoint} = \binlabelindex | \emparams^{(\emiteration-1)}, \realdata_{\datapoint}, \catlabel_{\datapoint}) \left[ \log P(\binlabel_{\datapoint} = \binlabelindex | \weights, \realdata_{\datapoint}) + \log P(\catlabel_{\datapoint}|\labelerrprobs,\binlabel_{\datapoint}=\binlabelindex) \right]
+  + \sum_{\datapoint} \sum_{\binlabelindex \in \{0,1\}} P(\binlabel_{\datapoint} = \binlabelindex | \emparams^{(\emiteration)}, \realdata_{\datapoint}, \catlabel_{\datapoint}) \left[ \log P(\binlabel_{\datapoint} = \binlabelindex | \weights, \realdata_{\datapoint}) + \log P(\catlabel_{\datapoint}|\labelerrprobs,\binlabel_{\datapoint}=\binlabelindex) \right]
   \\ & = &
   \emobjective_{\weights}\ +\ \emobjective_{\labelerrprobs}
   \\
   \emobjective_{\weights}
   & = &
   \log P(\weights)
-  + \sum_{\datapoint} \left[ (1-\prevpostprob) \log (1 - \logistic{\transpose{\weights} \realdata_{\datapoint}})
-  + \prevpostprob \log \logistic{\transpose{\weights} \realdata_{\datapoint}} \right]
+  + \sum_{\datapoint} \left[ (1-\postprob) \log (1 - \logistic{\transpose{\weights} \realdata_{\datapoint}})
+  + \postprob \log \logistic{\transpose{\weights} \realdata_{\datapoint}} \right]
   \\
   \emobjective_{\labelerrprobs}
   & = &
   \log P(\labelerrprobs)
-  + \sum_{\datapoint} \left[ (1-\prevpostprob) \log \labelerrprob_{0,\catlabel_{\datapoint}} + \prevpostprob \log \labelerrprob_{1,\catlabel_{\datapoint}} \right]
+  + \sum_{\datapoint} \left[ (1-\postprob) \log \labelerrprob_{0,\catlabel_{\datapoint}} + \postprob \log \labelerrprob_{1,\catlabel_{\datapoint}} \right]
   \\
-  \postprob{\emiteration}
+  \postprob
   & = &
   P(\binlabel_{\datapoint} = 1 | \emparams^{(\emiteration)}, \realdata_{\datapoint}, \catlabel_{\datapoint})
   \\
@@ -146,7 +146,7 @@ At the $\emiteration$'th iteration, the parameters found by the EM algorithm are
 \end{eqnarray*}
 
 The maximization of $\emobjective_{\weights}$ w.r.t. $\weights$ is a weighted, Lasso-penalized logistic regression
-(the weights being the $\postprob{\emiteration}$),
+(the weights being the $\postprob$),
 for which closed formulae may exist (if not, it may be better to use the conjugate gradient derivations
 of \cite{BootkrajangKaban2012} rather than derive gradients for this more indirect EM approach).
 
