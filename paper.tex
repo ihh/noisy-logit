@@ -157,7 +157,7 @@ The maximization of $\emobjective_{\labelerrprobs}$ w.r.t. $\labelerrprobs$ shou
 
 \subsection{Implementation of weighted logistic regression in R}
 
-The maximization of $\emobjective_{\weights}$ w.r.t. $\weights$ can be performed using R's \rcode{glm()} function (generalized linear model regression)
+The maximization of $\emobjective_{\weights}$ w.r.t. $\weights$ can be performed using R's \rcode{glmnet()} function (generalized linear model regression with Lasso prior)
 with \rcode{family = binomial(link = "logit")}
 (logistic regression is equivalent to binomial-family GLM regression with the ``logit'' link function).
 
@@ -181,7 +181,7 @@ Specifically, for $1 \leq \datapoint \leq \datapoints$
   \freq'_{\datapoints+\datapoint} & = & \postprob
 \end{eqnarray*}
 
-The weights can be supplied to the R code using using the \rcode{weights} argument to \rcode{glm()}.
+The weights can be supplied to the R code using using the \rcode{weights} argument to \rcode{glmnet()}.
 
 The weighted logistic regression fit can then be worked into an R program that implements EM.
 Pseudocode for this algorithm is as follows
@@ -191,7 +191,7 @@ Pseudocode for this algorithm is as follows
 \begin{itemize}
 \item Calculate $\postprob$ using current $\emparams^{(\emiteration)} = (\weights^{(\emiteration)},\labelerrprobs^{(\emiteration)})$
 \item Set $\labelerrprobs^{(\emiteration+1)} \leftarrow \argmax_{\labelerrprobs} ( \emobjective_{\labelerrprobs} )$ by counting \& normalizing
-\item Set $\weights^{(\emiteration+1)} \leftarrow \argmax_{\weights} ( \emobjective_{\weights} )$ using \rcode{glm()} with weights
+\item Set $\weights^{(\emiteration+1)} \leftarrow \argmax_{\weights} ( \emobjective_{\weights} )$ using \rcode{glmnet()} with \rcode{weights}
 \end{itemize}
 \item While $\log \frac{P(\allcatlabels,\emparams^{(\emiteration+1)}|\allrealdata)}{P(\allcatlabels,\emparams^{(\emiteration)}|\allrealdata)}$ is increasing
 \end{itemize}
