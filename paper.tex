@@ -49,13 +49,15 @@ $\logistic{x} = \frac{1}{1+e^{-x}}$ is the logistic function,
 $\weights \in \reals^\dimensions$ are parameters for the logistic regression model, and
 $\labelerrprobs$ are probability parameters for the label observation model.
 
-We put a Laplace double-exponential (Lasso) prior on $\weights$, and a uniform\footnote{
+We put a Laplace double-exponential (Lasso) prior on $\weights$, and a flattish\footnote{
   For identifiability of $\binlabel$, we need to break the symmetry of the Dirichlet prior slightly;
-  e.g. by adding a pseudocount of 1 for all $\binlabel \to \catlabel$ mappings that ``agree''.
+  e.g. by setting $\pseudocount_{\binlabel,\catlabel} = 1$ for $(\binlabel,\catlabel)$ pairs that ``agree'',
+  and $\pseudocount_{\binlabel,\catlabel} = 0$ for all other $(\binlabel,\catlabel)$ pairs.
 } Dirichlet prior on each row of $\labelerrprobs$
 \begin{eqnarray*}
 P(\weights) & \propto & \prod_{\dimension=1}^{\dimensions} \exp(-|\weight^{(\dimension)}|) \\
-P(\labelerrprobs) & \propto & \prod_{\binlabelindex \in \{0,1\}} \delta \left( 1 - \sum_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex} \right)
+P(\labelerrprobs|\pseudocounts) & \propto & \prod_{\binlabelindex \in \{0,1\}} \delta \left( 1 - \sum_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex} \right)
+\prod_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex}^{\pseudocount_{\binlabelindex,\catlabelindex}}
 \end{eqnarray*}
 
 This is equivalent to Section 2.2 of \cite{BootkrajangKaban2012},
@@ -152,10 +154,17 @@ At the ($\emiteration$+1)'th iteration, the parameters found by the EM algorithm
 
 The maximization of $\emobjective_{\weights}$ w.r.t. $\weights$ is a weighted, Lasso-penalized logistic regression
 (the weights being the $\postprob$).
+A suggested implementation of this maximization is outlined in Section~\ref{sec:WeightedLogisticRegression}.
 
-The maximization of $\emobjective_{\labelerrprobs}$ w.r.t. $\labelerrprobs$ should be a matter of counting.
+The maximization of $\emobjective_{\labelerrprobs}$ w.r.t. $\labelerrprobs$ is straightforward counting \& normalizing
+\begin{eqnarray*}
+  \argmax_{\labelerrprob_{\binlabel,\catlabel}} \emobjective_{\labelerrprobs} & = & \frac{\labelerrsum_{\binlabel,\catlabel}}{\sum_{\catlabelindex} \labelerrsum_{\binlabel,\catlabelindex} } \\
+  \labelerrsum_{0,\catlabelindex} & = & \pseudocount_{0,\catlabelindex} + \sum_{\datapoint:\ \catlabel_{\datapoint} = \catlabelindex} \left( 1 - \postprob \right) \\
+  \labelerrsum_{1,\catlabelindex} & = & \pseudocount_{1,\catlabelindex} + \sum_{\datapoint:\ \catlabel_{\datapoint} = \catlabelindex} \postprob
+\end{eqnarray*}
 
 \subsection{Implementation of weighted logistic regression in R}
+\label{sec:WeightedLogisticRegression}
 
 The maximization of $\emobjective_{\weights}$ w.r.t. $\weights$ can be performed using R's \rcode{glmnet()} function (generalized linear model regression with Lasso prior)
 with \rcode{family = binomial(link = "logit")}
@@ -193,7 +202,8 @@ Pseudocode for this algorithm is as follows
 \item Set $\labelerrprobs^{(\emiteration+1)} \leftarrow \argmax_{\labelerrprobs} ( \emobjective_{\labelerrprobs} )$ by counting \& normalizing
 \item Set $\weights^{(\emiteration+1)} \leftarrow \argmax_{\weights} ( \emobjective_{\weights} )$ using \rcode{glmnet()} with \rcode{weights}
 \end{itemize}
-\item While $\log \frac{P(\allcatlabels,\emparams^{(\emiteration+1)}|\allrealdata)}{P(\allcatlabels,\emparams^{(\emiteration)}|\allrealdata)}$ is increasing
+\item Loop over $\emiteration$ continues while $\log \frac{P(\allcatlabels,\emparams^{(\emiteration+1)}|\allrealdata)}{P(\allcatlabels,\emparams^{(\emiteration)}|\allrealdata)} > \epsilon$
+  for some EM convergence threshold $\epsilon$
 \end{itemize}
 
 \bibliographystyle{plain}
