@@ -35,11 +35,11 @@ denotes a categorical label with $\catlabels$ possible values
 (e.g. clinician-assigned label incorporating some degree of uncertainty).
 
 We aim to fit this with a two-stage model,
-first regressing the explanatory data $\realdata_\datapoint$ to a latent binary variable representing ground truth
+first regressing the explanatory data $\realdata_\datapoint$ to a latent binary variable representing the true underlying state
 $\binlabel_\datapoint \in \left\{ 0, 1 \right\}$
 (e.g. disease state),
 then modeling clinical labeling as a categorical variable $\catlabel_\datapoint | \binlabel_\datapoint$
-that is conditionally-independent of the explanatory data given the ground truth
+that is conditionally-independent of the explanatory data given the true underlying state
 \begin{eqnarray*}
 P(\binlabel = 1 | \realdata, \weights) & = & \logistic{\weights^T \realdata} \\
 P(\catlabel = \catlabelindex | \binlabel = \binlabelindex, \labelerrprobs) & = & \labelerrprob_{\binlabelindex,\catlabelindex}
