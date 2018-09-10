@@ -171,22 +171,22 @@ with \rcode{family = binomial(link = "logit")}
 (logistic regression is equivalent to binomial-family GLM regression with the ``logit'' link function).
 
 R's GLM-fitter allows {\em weighting} of the training examples;
-that is, a weight-augmented dataset $\dataset' = \{ (\realdata'_{\datapoint},\binlabel'_{\datapoint},\freq'_{\datapoint}): 1 \leq \datapoint \leq \datapoints' \}$
-where $\freq'_{\datapoint}$ is a {\em weight} (by default 1),
-loosely equivalent (when integer-valued) to the number of times datapoint $(\realdata_{\datapoint},\binlabel_{\datapoint})$ was observed, or its frequency.
+that is, an augmented dataset $\dataset' = \{ (\realdata'_{\datapoint},\binlabel'_{\datapoint},\freq'_{\datapoint}): 1 \leq \datapoint \leq \datapoints' \}$
+where $\freq'_{\datapoint}$ is a weight (by default 1),
+loosely equivalent (when integer-valued) to the number of times datapoint $(\realdata_{\datapoint},\binlabel_{\datapoint})$ was observed, or its {\em frequency}.
 
 To implement the M-step in the $(\emiteration+1)$'th iteration of EM,
 we construct a weighted pseudo-dataset $\dataset'$ containing $\datapoints' = 2\datapoints$ weighted training examples
-(that is, twice as many as the original unweighted dataset $\dataset$).
+(that is, two for every example in the original unweighted dataset $\dataset$).
 The first $\datapoints$ are labeled as negatives, the remainder as positives;
 the weights are set using $\postprob$, the posterior probability inferences from the previous step of EM.
 Specifically, for $1 \leq \datapoint \leq \datapoints$
 \begin{eqnarray*}
   \realdata'_{\datapoint} & = & \realdata_{\datapoint} \\
-  \binlabel'_{\datapoint} & = & 0 \\
-  \freq'_{\datapoint} & = & 1 - \postprob \\
   \realdata'_{\datapoints+\datapoint} & = & \realdata_{\datapoint} \\
+  \binlabel'_{\datapoint} & = & 0 \\
   \binlabel'_{\datapoints+\datapoint} & = & 1 \\
+  \freq'_{\datapoint} & = & 1 - \postprob \\
   \freq'_{\datapoints+\datapoint} & = & \postprob
 \end{eqnarray*}
 
