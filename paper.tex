@@ -178,7 +178,7 @@ loosely equivalent (when integer-valued) to the number of times datapoint $(\rea
 To implement the M-step in the $(\emiteration+1)$'th iteration of EM,
 we construct a weighted pseudo-dataset $\dataset'$ containing $\datapoints' = 2\datapoints$ weighted training examples
 (that is, two for every example in the original unweighted dataset $\dataset$).
-The first $\datapoints$ are labeled as negatives, the remainder as positives;
+The first $\datapoints$ are labeled as negatives, the remaining $\datapoints$ as positives;
 the weights are set using $\postprob$, the posterior probability inferences from the previous step of EM.
 Specifically, for $1 \leq \datapoint \leq \datapoints$
 \begin{eqnarray*}
