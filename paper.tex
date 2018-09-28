@@ -175,9 +175,10 @@ we introduce Lagrange multipliers $\lagrange_{\binlabelindex}$ and maximize the 
 The maximum occurs where $\frac{d\lagrangian}{d\labelerrprob_{\binlabelindex,\catlabelindex}} = 0$ and
 $\frac{d\lagrangian}{d\lagrange_{\binlabelindex}} = 0$, which leads to
 
-\[
+\begin{equation}
 \argmax_{\labelerrprob_{\binlabel,\catlabel}} \emobjective_{\labelerrprobs} = \frac{\labelerrsum_{\binlabel,\catlabel}}{\sum_{\catlabelindex} \labelerrsum_{\binlabel,\catlabelindex} }
-\]
+\label{eq:OptimalLabelProbs}
+\end{equation}
 
 
 \subsection{Implementation of weighted logistic regression in R}
@@ -216,7 +217,7 @@ Pseudocode for this algorithm is as follows
 \item For $\emiteration \in \{ 1, 2, 3 \ldots \}$ do:
 \begin{itemize}
 \item Calculate $\postprob$ using current $\emparams^{(\emiteration)} = (\weights^{(\emiteration)},\labelerrprobs^{(\emiteration)})$
-\item Set $\labelerrprobs^{(\emiteration+1)} \leftarrow \argmax_{\labelerrprobs} ( \emobjective_{\labelerrprobs} )$ by counting \& normalizing
+\item Set $\labelerrprobs^{(\emiteration+1)} \leftarrow \argmax_{\labelerrprobs} ( \emobjective_{\labelerrprobs} )$ using Equation~(\ref{eq:OptimalLabelProbs})
 \item Set $\weights^{(\emiteration+1)} \leftarrow \argmax_{\weights} ( \emobjective_{\weights} )$ using \rcode{glmnet()} with \rcode{weights}
 \end{itemize}
 \item Loop over $\emiteration$ continues while $\log \frac{P(\allcatlabels,\emparams^{(\emiteration+1)}|\allrealdata)}{P(\allcatlabels,\emparams^{(\emiteration)}|\allrealdata)} > \epsilon$
