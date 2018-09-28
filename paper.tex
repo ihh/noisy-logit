@@ -59,7 +59,7 @@ P(\weights) & \propto & \prod_{\dimension=1}^{\dimensions} \exp(-|\weight^{(\dim
 P(\labelerrprobs|\pseudocounts) & \propto & \prod_{\binlabelindex \in \{0,1\}}
 \prod_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex}^{\pseudocount_{\binlabelindex,\catlabelindex}}
 \end{eqnarray*}
-subject to the constraint $\sum_{\catlabelindex=0}^{\catlabels-1} = 1\ \forall\ \binlabelindex \in \{0,1\}$,
+subject to the constraint $\sum_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex} = 1\ \forall\ \binlabelindex \in \{0,1\}$,
 i.e. the parameters $\labelerrprob_{\binlabelindex,\catlabelindex}$ for each value of $\binlabelindex$ must lie on the $(\catlabels-1)$-dimensional simplex.
 
 This is equivalent to Section 2.2 of \cite{BootkrajangKaban2012},
@@ -158,12 +158,27 @@ The maximization of $\emobjective_{\weights}$ w.r.t. $\weights$ is a weighted, L
 (the weights being the $\postprob$).
 A suggested implementation of this maximization is outlined in Section~\ref{sec:WeightedLogisticRegression}.
 
-The maximization of $\emobjective_{\labelerrprobs}$ w.r.t. $\labelerrprobs$ is straightforward counting \& normalizing
+The maximization of $\emobjective_{\labelerrprobs}$ w.r.t. $\labelerrprobs$ can be performed using Lagrange multipliers.
 \begin{eqnarray*}
-  \argmax_{\labelerrprob_{\binlabel,\catlabel}} \emobjective_{\labelerrprobs} & = & \frac{\labelerrsum_{\binlabel,\catlabel}}{\sum_{\catlabelindex} \labelerrsum_{\binlabel,\catlabelindex} } \\
+  \emobjective_{\labelerrprobs} & = & \sum_{\binlabelindex,\catlabelindex} \labelerrsum_{0,\catlabelindex} \log \labelerrprob_{\binlabelindex,\catlabelindex} \\
   \labelerrsum_{0,\catlabelindex} & = & \pseudocount_{0,\catlabelindex} + \sum_{\datapoint:\ \catlabel_{\datapoint} = \catlabelindex} \left( 1 - \postprob \right) \\
   \labelerrsum_{1,\catlabelindex} & = & \pseudocount_{1,\catlabelindex} + \sum_{\datapoint:\ \catlabel_{\datapoint} = \catlabelindex} \postprob
 \end{eqnarray*}
+
+To maximize $\emobjective_{\labelerrprobs}$ subject to the constraint that $\sum_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex} = 1$ for each $\binlabelindex \in \{0,1\}$,
+we introduce Lagrange multipliers $\lagrange_{\binlabelindex}$ and maximize the following instead
+
+\[
+\lagrangian(\labelerrprobs;\lagrange_0,\lagrange_1) = \emobjective_{\labelerrprobs} + \sum_{\binlabelindex} \lagrange_\binlabelindex \left( 1 - \sum_{\catlabelindex} \labelerrprob_{\binlabelindex,\catlabelindex} \right)
+\]
+
+The maximum occurs where $\frac{d\lagrangian}{d\labelerrprob_{\binlabelindex,\catlabelindex}} = 0$ and
+$\frac{d\lagrangian}{d\lagrange_{\binlabelindex}} = 0$, which leads to
+
+\[
+\argmax_{\labelerrprob_{\binlabel,\catlabel}} \emobjective_{\labelerrprobs} = \frac{\labelerrsum_{\binlabel,\catlabel}}{\sum_{\catlabelindex} \labelerrsum_{\binlabel,\catlabelindex} }
+\]
+
 
 \subsection{Implementation of weighted logistic regression in R}
 \label{sec:WeightedLogisticRegression}
