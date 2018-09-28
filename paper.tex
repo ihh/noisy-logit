@@ -56,9 +56,11 @@ We put a Laplace double-exponential (Lasso) prior on $\weights$, and a flattish\
 } Dirichlet prior on each row of $\labelerrprobs$
 \begin{eqnarray*}
 P(\weights) & \propto & \prod_{\dimension=1}^{\dimensions} \exp(-|\weight^{(\dimension)}|) \\
-P(\labelerrprobs|\pseudocounts) & \propto & \prod_{\binlabelindex \in \{0,1\}} \delta \left( 1 - \sum_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex} \right)
+P(\labelerrprobs|\pseudocounts) & \propto & \prod_{\binlabelindex \in \{0,1\}}
 \prod_{\catlabelindex=0}^{\catlabels-1} \labelerrprob_{\binlabelindex,\catlabelindex}^{\pseudocount_{\binlabelindex,\catlabelindex}}
 \end{eqnarray*}
+subject to the constraint $\sum_{\catlabelindex=0}^{\catlabels-1} = 1\ \forall\ \binlabelindex \in \{0,1\}$,
+i.e. the parameters $\labelerrprob_{\binlabelindex,\catlabelindex}$ for each value of $\binlabelindex$ must lie on the $(\catlabels-1)$-dimensional simplex.
 
 This is equivalent to Section 2.2 of \cite{BootkrajangKaban2012},
 with the sum over $j$ in equation (8) of that paper constrained to $j\in\{0,1\}$
@@ -95,14 +97,14 @@ The joint likelihood including observed and missing data is
 \begin{eqnarray*}
   P(\missing,\allcatlabels,\emparams|\allrealdata)
   & = & P(\emparams) P(\missing,\allcatlabels|\emparams,\allrealdata) \\
-  & = & P(\weights) P(\labelerrprobs) P(\missing|\weights,\allrealdata) P(\allcatlabels|\labelerrprobs,\missing) \\
-  & = & P(\weights) P(\labelerrprobs) \prod_{\datapoint=1}^{\datapoints} P(\binlabel_{\datapoint}|\weights,\realdata_{\datapoint}) P(\catlabel_{\datapoint}|\labelerrprobs,\binlabel_{\datapoint})
+  & = & P(\weights) P(\labelerrprobs|\pseudocounts) P(\missing|\weights,\allrealdata) P(\allcatlabels|\labelerrprobs,\missing) \\
+  & = & P(\weights) P(\labelerrprobs|\pseudocounts) \prod_{\datapoint=1}^{\datapoints} P(\binlabel_{\datapoint}|\weights,\realdata_{\datapoint}) P(\catlabel_{\datapoint}|\labelerrprobs,\binlabel_{\datapoint})
 \end{eqnarray*}
 
 The marginal likelihood to be maximized, using observed data only, is
 \begin{eqnarray*}
   P(\allcatlabels,\emparams|\allrealdata) & = & \sum_{\missing} P(\missing,\allcatlabels,\emparams|\allrealdata) \\
-  & = & P(\weights) P(\labelerrprobs) \prod_{\datapoint=1}^{\datapoints} \sum_{\binlabelindex \in \{0,1\}} P(\binlabel_{\datapoint}=\binlabelindex|\weights,\realdata_{\datapoint}) P(\catlabel_{\datapoint}|\labelerrprobs,\binlabel_{\datapoint}=\binlabelindex)
+  & = & P(\weights) P(\labelerrprobs|\pseudocounts) \prod_{\datapoint=1}^{\datapoints} \sum_{\binlabelindex \in \{0,1\}} P(\binlabel_{\datapoint}=\binlabelindex|\weights,\realdata_{\datapoint}) P(\catlabel_{\datapoint}|\labelerrprobs,\binlabel_{\datapoint}=\binlabelindex)
 \end{eqnarray*}
 
 At the ($\emiteration$+1)'th iteration, the parameters found by the EM algorithm are given by maximizing the expected log-likelihood
@@ -117,11 +119,11 @@ At the ($\emiteration$+1)'th iteration, the parameters found by the EM algorithm
   \sum_{\missing} P(\missing | \emparams^{(\emiteration)}, \allrealdata, \allcatlabels) \log P(\missing,\allcatlabels,\emparams|\allrealdata)
   \\
   & = & 
-  \log P(\weights) + \log P(\labelerrprobs)
+  \log P(\weights) + \log P(\labelerrprobs|\pseudocounts)
   + \sum_{\missing} P(\missing | \emparams^{(\emiteration)}, \allrealdata, \allcatlabels) \left[ \log P(\missing| \weights, \allrealdata) + \log P(\allcatlabels|\labelerrprobs,\missing) \right]
   \\
   & = & 
-  \log P(\weights) + \log P(\labelerrprobs)
+  \log P(\weights) + \log P(\labelerrprobs|\pseudocounts)
   \\ & &
   + \sum_{\datapoint} \sum_{\binlabelindex \in \{0,1\}} P(\binlabel_{\datapoint} = \binlabelindex | \emparams^{(\emiteration)}, \realdata_{\datapoint}, \catlabel_{\datapoint}) \left[ \log P(\binlabel_{\datapoint} = \binlabelindex | \weights, \realdata_{\datapoint}) + \log P(\catlabel_{\datapoint}|\labelerrprobs,\binlabel_{\datapoint}=\binlabelindex) \right]
   \\ & = &
@@ -135,7 +137,7 @@ At the ($\emiteration$+1)'th iteration, the parameters found by the EM algorithm
   \\
   \emobjective_{\labelerrprobs}
   & = &
-  \log P(\labelerrprobs)
+  \log P(\labelerrprobs|\pseudocounts)
   + \sum_{\datapoint} \left[ (1-\postprob) \log \labelerrprob_{0,\catlabel_{\datapoint}} + \postprob \log \labelerrprob_{1,\catlabel_{\datapoint}} \right]
   \\
   \postprob
