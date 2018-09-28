@@ -158,9 +158,9 @@ The maximization of $\emobjective_{\weights}$ w.r.t. $\weights$ is a weighted, L
 (the weights being the $\postprob$).
 A suggested implementation of this maximization is outlined in Section~\ref{sec:WeightedLogisticRegression}.
 
-The maximization of $\emobjective_{\labelerrprobs}$ w.r.t. $\labelerrprobs$ can be performed using Lagrange multipliers.
+Collecting coefficients of $\log \labelerrprob_{\binlabelindex,\catlabelindex}$ in $\emobjective_{\labelerrprobs}$, we find
 \begin{eqnarray*}
-  \emobjective_{\labelerrprobs} & = & \sum_{\binlabelindex,\catlabelindex} \labelerrsum_{0,\catlabelindex} \log \labelerrprob_{\binlabelindex,\catlabelindex} \\
+  \emobjective_{\labelerrprobs} & = & \sum_{\binlabelindex,\catlabelindex} \labelerrsum_{\binlabelindex,\catlabelindex} \log \labelerrprob_{\binlabelindex,\catlabelindex} \\
   \labelerrsum_{0,\catlabelindex} & = & \pseudocount_{0,\catlabelindex} + \sum_{\datapoint:\ \catlabel_{\datapoint} = \catlabelindex} \left( 1 - \postprob \right) \\
   \labelerrsum_{1,\catlabelindex} & = & \pseudocount_{1,\catlabelindex} + \sum_{\datapoint:\ \catlabel_{\datapoint} = \catlabelindex} \postprob
 \end{eqnarray*}
